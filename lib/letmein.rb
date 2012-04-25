@@ -4,13 +4,73 @@ require 'bcrypt'
 module LetMeIn
   
   Error = Class.new StandardError
+  AuthenticationRequired = Class.new StandardError
+  AnonymousAccessRequired = Class.new StandardError
   
   class Railtie < Rails::Railtie
     config.to_prepare do
       LetMeIn.initialize
     end
+    initializer 'letmein' do |app|
+      LetMeIn::Hooks.init!
+    end
   end
   
+  class Hooks
+    def self.init!
+      ActiveSupport.on_load(:action_controller) do
+        ::ActionController::Base.send :include, LetMeIn::ActionControllerExtension
+        ::ActionController::Base.send :before_filter, :optional_authentication
+        ::ActionController::Base.send :cattr_accessor, :required_scopes
+      end
+    end
+  end
+
+  module ActionControllerExtension
+    def self.included(c)
+      c.helper_method :current_account
+      c.helper_method :authenticated?
+    end
+
+    def current_account
+      @current_account
+    end
+
+    def authenticated?
+      !current_account.blank?
+    end
+
+    def optional_authentication
+      if session[:current_account_id]
+        model = LetMeIn.config.models.first.constantize
+        authenticate model.find_by_id(session[:current_account_id])
+      end
+    rescue ActiveRecord::RecordNotFound
+      unauthenticate!
+    end
+
+    def require_authentication
+      raise AuthenticationRequired.new unless authenticated?
+    end
+
+    def require_anonymous_access
+      raise AnonymousAccessRequired.new if authenticated?
+    end
+
+    def authenticate(account)
+      if account
+        @current_account = account
+        session[:current_account_id] = account.id
+      end
+    end
+    #alias :sign_in= :authenticate
+
+    def unauthenticate!
+      @current_account = session[:current_account_id] = nil
+    end
+  end
+
+
   # Configuration class with some defaults. Can be changed like this:
   #   LetMeIn.configure do |conf|
   #     conf.model      = 'Account'
