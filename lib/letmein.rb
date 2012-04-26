@@ -28,22 +28,22 @@ module LetMeIn
 
   module ActionControllerExtension
     def self.included(c)
-      c.helper_method :current_account
+      c.helper_method :authenticated
       c.helper_method :authenticated?
     end
 
-    def current_account
-      @current_account
+    def authenticated
+      @authenticated_object
     end
 
     def authenticated?
-      !current_account.blank?
+      !authenticated.blank?
     end
 
     def optional_authentication
-      if session[:current_account_id]
+      if session[:authenticated_object_id]
         model = LetMeIn.config.models.first.constantize
-        authenticate model.find_by_id(session[:current_account_id])
+        authenticate model.find_by_id(session[:authenticated_object_id])
       end
     rescue ActiveRecord::RecordNotFound
       unauthenticate!
@@ -59,14 +59,14 @@ module LetMeIn
 
     def authenticate(account)
       if account
-        @current_account = account
-        session[:current_account_id] = account.id
+        @authenticated_object = account
+        session[:authenticated_object_id] = account.id
       end
     end
     #alias :sign_in= :authenticate
 
     def unauthenticate!
-      @current_account = session[:current_account_id] = nil
+      @authenticated_object = session[:authenticated_object_id] = nil
     end
   end
 

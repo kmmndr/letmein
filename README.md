@@ -50,23 +50,59 @@ When credentials are invalid:
 Usage
 =====
 
-There are no built-in routes/controllers/views/helpers or anything. I'm confident you can do those yourself, because you're awesome. But here's an example how you can implement the controller handling the login:
+There are no built-in routes/controllers/views/helpers, just some helpful methods overloaded into base classes.
+Here's an example how you can implement the controller handling the login :
 
+    # app/controllers/sessions_controller.rb
     class SessionsController < ApplicationController
       def create
         @session = UserSession.new(params[:user_session])
         @session.save!
-        session[:user_id] = @session.user.id
+        # log in
+        authenticate @session.user
         flash[:notice] = "Welcome back #{@session.user.name}!"
         redirect_to '/'
         
       rescue LetMeIn::Error
         flash.now[:error] = 'Invalid Credentials'
+        unauthenticate!
         render :action => :new
+      end
+
+      def destroy
+        # log off
+        unauthenticate!
+        redirect_to root_url, :notice => "Logged out!"
       end
     end
     
-Upon successful login you have access to *session[:user_id]*. The rest is up to you.
+Upon successful login you have access to `authenticated` which will be the object you've authenticated (Account, User, or anything else), and `authenticated?` which will return true when connected.
+These methods are availlable as helper too.
+
+There are some filters you may use within your controllers :
+  * require_authentication
+  * require_anonymous_access
+
+    # app/controllers/users_controller.rb
+    class UsersController < ApplicationController
+      before_filter :require_authentication
+      # or
+      before_filter :require_anonymous_access
+      # or none of them
+    end
+
+At last, a very simple example to create the view associated
+
+    # app/views/sessions/new.html.erb
+    <%= form_for :account_session do |f| %>
+      <%= f.label :username %>
+      <%= f.text_field :username %>
+      <%= f.label :password %>
+      <%= f.password_field :password %>
+      <%= f.submit "Valider" %>
+    <% end %>
+
+The rest is up to you.
 
 Authenticating Multiple Models
 ==============================
