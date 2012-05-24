@@ -10,4 +10,7 @@ end
 
 group :test do
   gem 'sqlite3'
+  #gem 'turn', :require => false
+  gem 'minitest'
+  gem 'purdytest'
 end

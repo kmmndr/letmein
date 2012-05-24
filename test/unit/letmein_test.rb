@@ -1,12 +1,4 @@
-require 'test/unit'
-require 'rails'
-require 'letmein'
-require 'sqlite3'
-
-$stdout_orig = $stdout
-$stdout = StringIO.new
-ActiveRecord::Base.establish_connection(:adapter => 'sqlite3', :database => ':memory:')
-ActiveRecord::Base.logger = Logger.new($stdout)
+require 'test_helper'
 
 class User  < ActiveRecord::Base ; end
 class Admin < ActiveRecord::Base ; end
@@ -31,7 +23,7 @@ class CustomAdminSession < LetMeIn::Session
   # ...
 end
 
-class LetMeInTest < Test::Unit::TestCase
+class LetMeInTest < MiniTest::Unit::TestCase
   
   def setup
     ActiveRecord::Base.logger
@@ -223,4 +215,5 @@ class LetMeInTest < Test::Unit::TestCase
     assert session.valid?
     assert_equal admin, session.admin
   end
+
 end
