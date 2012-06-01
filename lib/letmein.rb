@@ -147,11 +147,11 @@ module LetMeIn
     end
     
     def authenticate
-      p = LetMeIn.accessor(:password, LetMeIn.config.models.index(self.class.model))
-      s = LetMeIn.accessor(:salt, LetMeIn.config.models.index(self.class.model))
+      letmein_password = LetMeIn.accessor(:password, LetMeIn.config.models.index(self.class.model))
+      letmein_salt = LetMeIn.accessor(:salt, LetMeIn.config.models.index(self.class.model))
       
       object = self.class.model.constantize.where("#{self.class.attribute}" => self.login).first
-      self.object = if object && !object.send(p).blank? && object.send(p) == BCrypt::Engine.hash_secret(self.password, object.send(s))
+      self.object = if object && !object.send(letmein_password).blank? && object.send(letmein_password) == BCrypt::Engine.hash_secret(self.password, object.send(letmein_salt))
         object
       else
         errors.add :base, 'Failed to authenticate'
@@ -172,10 +172,10 @@ module LetMeIn
         
         define_method :encrypt_password do
           if password.present?
-            p = LetMeIn.accessor(:password, LetMeIn.config.models.index(self.class.to_s))
-            s = LetMeIn.accessor(:salt, LetMeIn.config.models.index(self.class.to_s))
-            self.send("#{s}=", BCrypt::Engine.generate_salt)
-            self.send("#{p}=", BCrypt::Engine.hash_secret(password, self.send(s)))
+            letmein_password = LetMeIn.accessor(:password, LetMeIn.config.models.index(self.class.to_s))
+            letmein_salt = LetMeIn.accessor(:salt, LetMeIn.config.models.index(self.class.to_s))
+            self.send("#{letmein_salt}=", BCrypt::Engine.generate_salt)
+            self.send("#{letmein_password}=", BCrypt::Engine.hash_secret(password, self.send(letmein_salt)))
           end
         end
       end

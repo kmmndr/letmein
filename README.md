@@ -80,8 +80,11 @@ Upon successful login you have access to `authenticated` which will be the objec
 These methods are availlable as helper too.
 
 There are some filters you may use within your controllers :
-  * require_authentication
-  * require_anonymous_access
+
+  - `require_authentication`
+  - `require_anonymous_access`
+
+They force to be authenticated or not, as shown below :
 
     # app/controllers/users_controller.rb
     class UsersController < ApplicationController
